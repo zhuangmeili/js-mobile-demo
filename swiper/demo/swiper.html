@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/common.css">
+    <style type="text/css">
+        .swiper {
+            position: relative;
+            width: 100%;
+            height: 20rem;
+            overflow: hidden;
+        }
+
+        .pics {
+            display: flex;
+            display: -webkit-flex;
+            /*transition:cubic-bezier(0.59, -0.03, 0.28, 1) 0.4s;*/
+            /*-webkit-transition:cubic-bezier(0.59, -0.03, 0.28, 1) 0.4s ;*/
+
+
+        }
+
+        .pics li {
+            flex: 1;
+        }
+
+        .pics li img {
+            height: 20rem;
+            display: block;
+        }
+        .dots{ width: 100%; position: absolute; left: 0; bottom: 10px; z-index: 9;  text-align: center;
+       }
+.dots li{ display: inline-block; width: 20px; height: 20px; background: rgba(0,0,0,0.2);  margin:0 5px;
+border-radius: 50%; text-indent: 100px; overflow: hidden;}
+        .dots li.cur{ background: rgba(37, 224, 5, 0.8);;}
+    </style>
+    <script src="../js/flexible.js"></script>
+
+</head>
+<body>
+<div class="swiper">
+    <ul class="pics" id="pics">
+        <li><img src="../images/test1.jpg" alt=""></li>
+        <li><img src="../images/test2.jpg" alt=""></li>
+        <li><img src="../images/test3.jpg" alt=""></li>
+        <li><img src="../images/test4.jpg" alt=""></li>
+        <li><img src="../images/test5.jpg" alt=""></li>
+    </ul>
+    <div class="dots">
+        <ol id="dots">
+            <li>1</li>
+            <li>2</li>
+            <li>3</li>
+            <li>4</li>
+            <li>5</li>
+        </ol>
+    </div>
+</div>
+
+</body>
+<script type="text/javascript">
+    //可以传递的参数
+    var autoPlay=true;
+    var intervalTime=3000;
+
+
+
+    function swipe() {
+        var startX = 0;
+        var endX = 0;
+        var disX = 0;
+        var oPics = document.getElementById("pics");
+        var oPicLis=oPics.getElementsByTagName("li");
+        var oImg = oPics.getElementsByTagName("img");
+
+        var oDots=document.getElementById("dots");
+        var oDotLis=oDots.getElementsByTagName("li");
+        var len = oPics.getElementsByTagName("li").length;
+        var stepW = oPics.getBoundingClientRect().width;
+        var maxMove = Math.floor(stepW / 4); //超过maxMove的话视为 加载下一页成功
+
+        var curPage = 0;               //默认显示第一个
+        var nextPage = (curPage + 1) % len;//下一页
+        var isMove = false;  //是否运动
+
+        var startTime = 0;
+        var endTime = 0;
+        var timer = null;
+        var cloneFlag=0; //拷贝的标志位
+
+
+        for (let i = 0; i < len; i++) {
+            oImg[i].style.width = stepW + 'px';
+            oDotLis[i].className="";
+            //cloneNode
+            cloneFlag++;
+            if(cloneFlag>len){ return ; }
+            let newLi=oPicLis[i].cloneNode(true);
+            oPics.appendChild(newLi);
+
+        }
+        len=oPics.getElementsByTagName("li").length;
+        oDotLis[0].className="cur";
+
+        function getX(e) {
+            var touch = e.touches[0];
+            return touch.pageX;
+        }
+        //显示 图片
+        function showPics() {
+            oPics.style.transition='cubic-bezier(0.59, -0.03, 0.28, 1) 0.4s ';
+            oPics.style.WebkitTransition = 'cubic-bezier(0.59, -0.03, 0.28, 1) 0.4s ';
+            oPics.style.transform='translateX('+(-curPage*stepW)+'px)';
+            oPics.style.WebkitTransform = 'translateX('+(-curPage*stepW)+'px)';
+        }
+        // 改变焦点
+        function changeTabFocus() {
+            for(let i=0;i<len/2;i++){
+                oDotLis[i].className="";
+            }
+            oDotLis[curPage].className="cur";
+        }
+        //transitionEnd方法
+        function transitionEndFn() {
+            if(curPage==0){
+                oPics.style.transition='cubic-bezier(0.59, -0.03, 0.28, 1) 0s ';
+                oPics.style.WebkitTransition = 'cubic-bezier(0.59, -0.03, 0.28, 1) 0s ';
+                oPics.style.transform='translateX('+(-curPage*stepW)+'px)';
+                oPics.style.WebkitTransform = 'translateX('+(-curPage*stepW)+'px)';
+            }
+        }
+        oPics.addEventListener("transitionend", transitionEndFn);
+        oPics.addEventListener('touchstart', function (e) {
+            clearInterval(timer);//清除timer
+            console.log("timer clear"+timer);
+            startTime = (new Date()).getTime();
+            startX = getX(e);
+            isMove = true;
+            return false;
+        });
+        oPics.addEventListener("touchmove", function (e) {
+            if (!isMove) {
+                return false;
+            }
+            endX = getX(e);
+            disX = endX - startX;
+            if(disX<0){ //left
+
+            }
+            if(disX>0){ //drag right
+                if (curPage==0){
+                    curPage=len/2;
+                }
+            }
+            oPics.style.transition='cubic-bezier(0.59, -0.03, 0.28, 1) 0s ';
+            oPics.style.WebkitTransition = 'cubic-bezier(0.59, -0.03, 0.28, 1) 0s ';
+            oPics.style.transform = 'translateX(' + (disX-curPage*stepW) + 'px)';
+            oPics.style.WebkitTransform = 'translateX(' + (disX-curPage*stepW) + 'px)';
+            return false;
+        });
+        //touchend时候获得disX判断是向左边还是向右边滑动了
+        document.addEventListener("touchend",function (e) {
+            if(!isMove){ return false; }
+            isMove=false;
+            endTime=(new Date()).getTime();
+            var speed=Math.abs(startX-endX)/(endTime-startTime);
+
+            // 左滑动 left (1)滑动的慢 但是超过1/4 则表示划过去了（2）速度比较快也表示划过去了
+            if (disX<0) {
+                if(Math.abs(disX)>maxMove ||speed>0.4 ){
+                    //翻页
+                    curPage++;
+                    if(curPage>=len/2){
+                        showPics();
+                        curPage=curPage%(len/2);
+                    }else{
+                        showPics();
+                    }
+                    console.log(curPage);
+                    changeTabFocus(); //焦点变化
+                }else{
+                    showPics();
+                }
+            }
+            // 右滑动 right
+            if(disX>0){
+                if(Math.abs(disX)>maxMove ||speed>0.4 ){
+                    curPage--;
+                    showPics();
+                    changeTabFocus(); //焦点变化
+                }else{
+                    showPics();
+                }
+            }
+            if(!timer || autoPlay){
+                console.log("timer set!!设置timer");
+                autoPlayLeft();
+            }
+            return false;
+        });
+
+        function autoPlayLeft() {
+            //触发自动轮播
+            if(autoPlay){
+               //oPics.addEventListener("transitionend", transitionEndFn);
+               timer=setInterval(function () {
+                   curPage++;
+                   if(curPage>=len/2){
+                       //1、先运动到最后
+                       showPics();
+                       //2、curPage  //一瞬间拉过来
+                       curPage=curPage%(len/2);
+                   }else{
+                       showPics();
+                   }
+                   changeTabFocus(); //焦点变化
+               },intervalTime);
+            }
+        }
+        autoPlayLeft();
+    }
+
+
+    //调用方法
+    swipe();
+</script>
+
+</html>
